@@ -1,0 +1,543 @@
+---
+title: "Spatial econometrics and machine learning: economic and social research questions using spatial data"
+date: 2024-06-03
+author:
+    - name: Roger Bivand
+      orcid: 0000-0003-2392-6140
+      email: Roger.Bivand@nhh.no
+      url: www.nhh.no/en/employees/faculty/roger-bivand/
+      affiliations:
+      - name: Norwegian School of Economics
+        city: Bergen
+        country: Norway
+format: 
+  beamer:
+    aspectratio: 169
+    theme: metropolis
+    highlight-style: pygments
+    monofont: 'Source Code Pro'
+    monofontoptions: 
+      - Scale=0.65
+    pdf-engine: xelatex
+    section-titles: true
+    slide-level: 2
+bibliography: [book.bib, packages.bib]
+---
+
+# Introduction
+
+## Introduction 
+
+- Spatial data involves choices in defining units of observation, and possible spillovers between proximate observations; independence should not be assumed.
+
+- From work examining machine learning implementations applied to spatial data, it has been reported that model selection is affected by any lack of independence, and that aspatial models used for training may be insufficient when the training data shows spatial processes
+
+- The Ames house price data set used for assessing the value of properties is affected by spatial autocorrelation, where both the choice of training/test set splits and of appropriate models need attention
+
+
+# Why is spatial data special? {#sec-why-special}
+
+## Observations in space
+
+- Nearness in space and the fluid assignment of boundaries between observations may affect our view of how many valid observations have been made. 
+
+- Is $n$ really $n$ or some reduced number reflecting the common origins of the data reported?
+
+- The units of observation chosen may not address important sources of variation in the response.
+
+- @kendall39 analysed crop productivity in England by crop counties for which data were readily available, but was criticised for not using soil or climate classifications instead
+
+## Student's view
+
+- Assuming that the spatial units of observation are accepted as given, spurious correlation due to position may arise from unobserved spillover between nearby observations
+
+- @student:14 touches briefly on agricultural trial plots in describing this aspect of the problem as treatments may leach between neighbouring plots. 
+
+- He had been concerned in several contexts with the effective degrees of freedom of a collection of observations. 
+
+- Positive spillover, leading to more likeness between neighbours, would clearly reduce the effective count of independent observations.
+
+## Bunch of grapes
+
+- @stephan:34 gives us a powerful picture of the problem:
+
+- *Data of geographic units are tied together, like bunches of grapes, not separate, like balls in an urn. Of course mere contiguity in time and space does not of itself indicate lack of independence between units in a relevant variable or attribute, but in dealing with social data, we know that by virtue of their very social character, persons, groups and their characteristics are interrelated and not independent.* [@stephan:34, p. 165]
+
+## Spatial autocorrelation
+
+- Tobler expresses his view, perhaps the view that is most often cited in discussing spatial data, in this way:
+
+- *... the first law of geography: everything is related to everything else, but near things are more related than distant things.* [@tobler:70, p. 236]
+
+## Spatial autocorrelation signalling model mis-specification
+
+- However, @olsson:70 asks whether the unquestioning application of the ubiquity of spatial autocorrelation, as the only lens through which to view spatial data, is wise: 
+
+- *The existence of such autocorrelations makes it tempting to agree with Tobler (1970, 236) that 'everything is related to everything else, but near things are more related than distant things.' On the other hand, the fact that the autocorrelations seem to hide systematic specification errors suggests that the elevation of this statement to the status of 'the first law of geography' is at best premature. At worst, the statement may represent the spatial variant of the post hoc fallacy, which would mean that coincidence has been mistaken for a causal relation.* [@olsson:70, p. 228; cf. @pebesma+bivand:23, p. 210]
+
+# Economic and social research questions using spatial data {#sec-why-econ-soc}
+
+## Spatial confounding
+
+- Spatial autocorrelation might be addressed by estimating the spatial structure in the residual term.
+
+- @pace+lesage:08 point to a worrying problem encountered when the estimated coefficients of an aspatial regression model and those of a spatial regression model including such an estimated spatial structure diverge. 
+
+- This may occur when omitted independent variables are "picked up" by spatially autocorrelated residuals, and they propose a Hausman test to check such divergence. 
+
+- This observation is very similar to that seen in disease mapping, from initial reports by @reichetal:06 and @hodges+reich:10, termed *spatial confounding*, and recently actively pursued by @zimmerman+verhoef:22, @dupontetal:22, urdangarinetal:23 and @wolf:24.
+
+## Spatial diff-in-diff
+
+- @delgado+florax:15 draw on @rubin:74; @rubin:78 to highlight the risk posed to the stable unit treatment value assumption (SUTVA) by unmodelled spatial dependency in the data.
+
+- This key assumption for causal alaysis "implies that potential outcomes for person $i$ are unrelated to the treatment status of other individuals" [@angristetal:96]. The assumption and the risk of its violation when spatial data is modelled aspatially is also discussed at that time by @koschinsky:13 and @baylis+ham:15.
+
+- Work by @delgado+florax:15 has been followed up by @bardakaetal:18 and @bardakaetal:19, showing practically how a difference-in-difference econometric design measuring the impact of change on a chosen dependent variable. @dubeetal:14 approach spatial difference-in-difference in a similar way, followed up in @dubeetal:17 and @dubeetal:21. 
+
+## Causality
+
+- Three important surveys of causality in spatial data analysis have appeared recently: @kolak+anselin:20, @gaoetal:22, and @akbarietal:23.
+
+- All of these take up spatial challenges to the stable unit treatment value assumption, @kolak+anselin:20 with an example of the impact of changes in minimum legal drinking age laws on mortality for US states.
+
+- @gaoetal:22 point to the rapid extension of spatial statistics to other knowledge domains including bioinformatics, in which causal inference is clearly important.
+
+- The main use cases considered by @akbarietal:23 are in spatial cognition, including wayfinding processes and navigation systems, because these are so much broader in impact than program evaluations.
+
+## Spatial autocorrelation and machine learning {.allowframebreaks}
+
+- @kattenbornetal:22 study the impact of spatial autocorrelation on the training of convolutional neural networks for data acquired by drones, and find:
+
+- *Our results suggest that violating spatial independence between training and test data can severely inflate model apparent performance (up to almost 30%) and, hence, lead to an overly optimistic evaluation of the generalization of such models.* [@kattenbornetal:22, p. 7]
+
+- This observation, that the violation of the assumption of spatial independence between training, validation and test data sets prejudices outcomes, has been recognised in much of spatial data science for years, at least from @brenning:12.
+
+- @kopczewska:22 summarises the current research position with regard to spatial data use in machine learning in this way:
+
+- *It is clear from many studies that unaddressed spatial autocorrelation generates problems, such as overoptimistic fit of models, omitted information and/or biased (suboptimal) prediction. Thus, an up-to-date toolbox dealing with spatial autocorrelation should be used in all ML models in order to ensure methodological appropriateness.* [@kopczewska:22, p. 732]
+
+- @wagner+zeileis:19 use model-based recursive partitioning handling the spatial dependencies by including the spatially lagged dependent variable in a spatial econometric model to study heterogeneous growth.
+
+- @vidolietal22 approach heterogeneity through spatial regimes (clusters of observations in covariate and/or geographical space), as do @piras+sarrias:23; all three articles are backed by software.
+
+- @mahoneyetal:23 and @mahoney:23a discuss the performance of some tools for exploring how to handle spatial information spillovers in machine learning in the `tidymodels` setting.
+
+- @schratzetal:19 and @schratzetal:22 cover similar ground, focussed more on ecological data, for the `mlr` setting.
+
+- @meyeretal:19, @meyer+pebesma:21, @meyer+pebesma:22, @milaetal:22 and @linnenbrinketal:23 develop these issues with application to ecological and environmental data, often for the detection of change in earth observation data for which units of observation are given by the satellite-borne instruments.
+
+
+# Anaysis of the Ames housing data set
+
+## The Ames housing data set
+
+- @decock:11 proposes to replace the Boston housing value data set dating from the 1970's (for a deconstruction, see @bivand:17) as more relevant to teaching this century.
+
+- The Ames house sale price data set contains 2930 observations (2006-2010), and many explanatory variables used for assessing home values, and is used extensively in @kuhn+silge:22.
+
+- @kuhn+silge:22 do mention the spatial nature of the data, presenting maps, but assert that *it is safe to assume that, statistically, the data from a property are independent of other properties* (Section 5.3); the current edition pre-dates @mahoneyetal:23 and @mahoney:23a.
+
+- The data is available for R in the `modeldata` package [@R-modeldata].
+
+## Moran's $I$
+
+Moran's $I$ is given as [@cliff+ord:81, page 17]:
+
+$$
+I = \frac{n \sum_{(2)} w_{ij} z_i z_j}{S_0 \sum_{i=1}^{n} z_i^2}
+$$
+
+where $x_i, i=1, \ldots, n$ are $n$ observations on the numeric variable of interest, $z_i = x_i - \bar{x}$, $\bar{x} = \sum_{i=1}^{n} x_i / n$, $\sum_{(2)} = \stackrel{\sum_{i=1}^{n} \sum_{j=1}^{n}}{i \neq j}$, $w_{ij}$ are the spatial weights, and $S_0 = \sum_{(2)} w_{ij}$. A comparison of implementations of measures of spatial autocorrelation shows that a wide range of measures is available in R in a number of packages, chiefly in the `spdep` package, and that differences from other implementations can be attributed to design decisions [@bivand+wong:18]. The `spdep` package also includes the only implementations of exact and Saddlepoint approximations to global Moran's I [@tiefelsdorf:02; @bivandetal:09].
+
+## Moran's $I$
+
+When the spatial weights are row-standardised:
+
+$$
+\sum_{j=1} w_{ij} = 1, \forall i
+$$
+
+$n = S_0$ and $I$ simplifies to:
+
+$$
+I = \frac{{\mathbf z}^\top{\mathbf W}{\mathbf z}}{{\mathbf z}^\top{\mathbf z}}
+$$
+
+which will be useful later.
+
+## How safe is the assumption of independence between properties?
+
+Taking $k = 10$ nearest neighbours on the sphere of Ames propertiesx [@R-sf; @R-spdep], and Moran's $I$ test for spatial autocorrelation [for references see @bivand+wong:18; @pebesma+bivand:23; @R-spdep], we see that it is most unlikely that the assumption holds for the logarithm of sale price:
+
+```{r ames1, echo=FALSE, cache=TRUE}
+data(ames, package="modeldata")
+row.names(ames) <-  formatC(1:nrow(ames), format="d", flag="0", width=4)
+library(spdep)
+ames_sf <- sf::st_as_sf(ames, coords = c("Longitude", "Latitude"), crs = "OGC:CRS84", remove=FALSE)
+knn10 <- spdep::knn2nb(spdep::knearneigh(ames_sf, k=10), sym=FALSE, row.names=row.names(ames_sf))
+out <- capture.output(print(spdep::moran.test(log(ames_sf$Sale_Price), listw=nb2listw(knn10), alternative="two.sided")))
+cat(out[7:8], sep="\n")
+```
+
+## How safe is the assumption of independence between properties?
+
+If we rather take the residuals from a linear model of the logarithm of sale price taking all the explanatory variables in the data set, the positive spatial autocorrelation remains very strong:
+
+```{r ames2, echo=FALSE, cache=TRUE}
+lm_mod <- lm(log(Sale_Price) ~ ., data=st_drop_geometry(ames))
+out <- capture.output(print(spdep::lm.morantest(lm_mod, listw=nb2listw(knn10), alternative="two.sided")))
+cat(out[8:9], sep="\n")
+```
+
+
+## How safe is the assumption of independence between properties?
+
+Even taking the exact Moran's $I$ test for regression residuals [@bivandetal:09], residual autocorrelation is very evident:
+
+```{r ames3, echo=FALSE, cache=TRUE}
+out <- capture.output(print(spdep::lm.morantest.exact(lm_mod, listw=nb2listw(knn10), alternative="two.sided", useTP=TRUE)))
+cat(out[8:9], sep="\n")
+```
+
+## Data splitting
+
+Splitting the data into training and testing sets at random (setting the RNG seed and running `rsample::initial_split(ames, prop = 0.8)`) [@R-rsample] and fitting the same linear model using all the explanatory variables, we can assess the differences between the logarithm of sale price and the predictions made from the linear model fitted on the training set with respect to spatial autocorrelation, for the combined stacked training and test sets (watching for aliased coefficients), using `waywiser::ww_global_moran_i_vec`, keeping to the $k=10$ neighbour definition [@R-waywiser]; note that the presence of spatial autocorrelation may impact other model evaluation criteria like RMSE (what is $n$ really?):
+
+```{r ames4, echo=FALSE, cache=TRUE}
+set.seed(12345)
+ames_val_split <- rsample::initial_split(ames, prop = 0.80)
+ames_train <- rsample::training(ames_val_split)
+lm_mod <- try(lm(log(Sale_Price) ~ ., data=ames_train))
+ames_test <- as.data.frame(rsample::testing(ames_val_split))
+ames_tt_sf <- sf::st_as_sf(rbind(ames_train, ames_test), coords = c("Longitude", "Latitude"), crs = "OGC:CRS84", remove=FALSE)
+nb_tt <- knn2nb(knearneigh(ames_tt_sf, k=10), sym=FALSE, row.names=row.names(ames_tt_sf))
+c0 <- coef(lm_mod)
+c0a <- na.omit(c0)
+mm_train <- model.matrix(log(Sale_Price) ~ ., data=ames_train)
+mm_train <- mm_train[,match(names(c0a), colnames(mm_train))]
+mm_test <- model.matrix(log(Sale_Price) ~ ., data=ames_test)
+mm_test <- mm_test[,match(names(c0a), colnames(mm_test))]
+ttX <- rbind(mm_train, mm_test)
+ptt <- ttX %*% c0a
+lw <- nb2listw(nb_tt)
+library(spatialreg)
+W_tt <- as(lw, "CsparseMatrix")
+waywiser::ww_global_moran_i_vec(truth=log(ames_tt_sf$Sale_Price), estimate=c(ptt), wt=lw)
+```
+
+## Decomposing $I$
+
+We can order $z$ and $W$ to create a $2\times2$ table of denominator compoments of $I$ from:
+
+$$
+I = \frac{{\mathbf z}^\top{\mathbf W}{\mathbf z}}{{\mathbf z}^\top{\mathbf z}}
+$$
+
+splitting on training (tr) and test (te) sets:
+
+$$
+I = \sum^{2}_{i=1} \sum^{2}_{j=1} \frac{{\mathbf z_i}^\top{\mathbf W_{i, j}}{\mathbf z_j}}{{\mathbf z}^\top{\mathbf z}}
+$$
+
+where $i, j$ are split. These components express the spatial autocorrelation within and between the training and test sets, where the within cases are block diagonal, and the between are off-diagonal rectangles, and will be equal only for symmetric ${\mathbf W}$.
+
+## Decomposing $I$ - partitioned ${\mathbf W}$
+
+```{r ames4a, echo=FALSE, cache=TRUE}
+knitr::include_graphics("Screenshot from 2024-05-29 11-47-02.png")
+```
+
+## Decomposing $I$
+
+The sum of the components of $i$ is as before:
+
+```{r ames5, echo=FALSE, warning=FALSE, cache=TRUE}
+ames_train$type <- "train"
+ames_test$type <- "test"
+type <- factor(c(ames_train$type, ames_test$type))
+x <- log(ames_tt_sf$Sale_Price) - ptt
+z <- scale(x, scale=FALSE)
+source("tt_moran.R")
+out <- tt_moran(z=z, type=type, W=W_tt, nsim=1000)
+sum(out)
+```
+
+Running a simple permutation test (over both train and test values - perhaps they should be permuted separately - 1000 draws) gives pseudo p-values for each of the four components.
+
+```{r ames5a, echo=FALSE, warning=FALSE, cache=TRUE}
+rbind(I=out, p.value=attr(out, "pval"))
+```
+
+Obviously, a different split would give a different outcome, but information is flowing between the test set and the training set for this draw.
+
+## GMM spatial error model
+
+Let's try fitting a spatial error model by GMM (`spatialreg::GMerrorsar`) [see for example @bivandetal:21 or @bivand+piras:15] on the training data set, taking the 10 nearest neighbours. The spatial autocorrelation in the residual is expressed through a spatial error model (SEM): 
+
+$$
+{\mathbf y} = {\mathbf X}\beta + {\mathbf u},
+\qquad {\mathbf u} = \rho {\mathbf W} {\mathbf u} + \varepsilon,
+\qquad ({\mathbf I} - \rho {\mathbf W}){\mathbf y} = ({\mathbf I} - \rho {\mathbf W}){\mathbf X}\beta + \varepsilon,
+$$
+
+where ${\mathbf y}$ is an $(n \times 1)$ vector of observations on a response variable taken at each of $n$ locations, ${\mathbf X}$ is an $(n \times k)$ matrix of covariates, $\beta$ is a $(k \times 1)$ vector of parameters, ${\mathbf u}$ is an $(n \times 1)$ spatially autocorrelated disturbance vector, $\varepsilon$ is an $(n \times 1)$ vector of independent and identically distributed disturbances and $\rho$ is a scalar spatial parameter.
+
+If the processes in the covariates and the response match, we should find little difference between the coefficients of a least squares and a SEM, but very often they diverge, suggesting that a Hausman test for this condition should be employed [@pace+lesage:08].
+
+## GMM spatial error model
+
+Our outcome measure $I$ for the differences between the logarithm of sale price and the predictions made from the GMM error model fitted on the training set will use 10 nearest neighbours from the combined training and test sets, so is not quite fair:
+
+```{r ames6, echo=FALSE, warning=FALSE, cache=TRUE}
+set.seed(12345)
+ames_val_split <- rsample::initial_split(ames, prop = 0.80)
+ames_train <- rsample::training(ames_val_split)
+ames_train_sf <- sf::st_as_sf(ames_train, coords = c("Longitude", "Latitude"), crs = "OGC:CRS84", remove=FALSE)
+nb_train <- knn2nb(knearneigh(ames_train_sf, k=10), sym=FALSE, row.names=row.names(ames_train_sf))
+gmm_err_mod <- GMerrorsar(log(Sale_Price) ~ ., data=ames_train, listw=nb2listw(nb_train), returnHcov=TRUE)
+ames_test <- as.data.frame(rsample::testing(ames_val_split))
+ames_tt_sf <- sf::st_as_sf(rbind(ames_train, ames_test), coords = c("Longitude", "Latitude"), crs = "OGC:CRS84", remove=FALSE)
+nb_tt <- knn2nb(knearneigh(ames_tt_sf, k=10), sym=FALSE, row.names=row.names(ames_tt_sf))
+lw <- nb2listw(nb_tt)
+c0 <- coef(gmm_err_mod$lm.target)
+names(c0) <- substring(names(c0), 19)
+c0a <- na.omit(c0)
+ttX <- model.matrix(log(Sale_Price) ~ ., data=st_drop_geometry(ames_tt_sf))
+ttX <- ttX[,match(names(c0a), colnames(ttX))]
+ptt <- ttX %*% c0a
+ptt <- ptt + gmm_err_mod$lambda * lag.listw(lw, log(ames_tt_sf$Sale_Price) - ptt)
+waywiser::ww_global_moran_i_vec(truth=log(ames_tt_sf$Sale_Price), estimate=c(ptt), wt=lw)
+```
+
+## Prediction
+
+@goulardetal:17, following @cressie:93, @haining:90 and @bivand:02, describe how predictions may be made for the spatial error model. With new data, it is most often the case that the values of the dependent variable to be predicted are not known, so that the best that can be done is to multiply the model matrix ${\mathbf X}$ by the estimated coefficients $\hat{\beta}$ as in the case of the linear model.
+
+It is also possible, given that the values of the dependent variable are available in the test set, to predict using:
+
+$$
+{\mathbf X}\hat{\beta} + \hat{\rho}{\mathbf W}({\mathbf y}-{\mathbf X}\hat{\beta})
+$$
+
+adding in the spatial smooth of the difference between the *truth* and the *estimate*. This is what is done here.
+
+## Decomposing $I$ for the GMM spatial error model
+
+The spillover between training and test set differences has not really been muted, but the training set residual autocorrelation has been muted here:
+
+```{r ames7, echo=FALSE, warning=FALSE, cache=TRUE}
+ames_train$type <- "train"
+ames_test$type <- "test"
+type <- factor(c(ames_train$type, ames_test$type))
+x <- log(ames_tt_sf$Sale_Price) - ptt
+z <- scale(x, scale=FALSE)
+W_tt <- as(lw, "CsparseMatrix")
+out <- tt_moran(z=z, type=type, W=W_tt, nsim=1000)
+rbind(I=out, p.value=attr(out, "pval"))
+```
+
+Unfortunately, this spatial error model appears to be rather mis-specified, as the regression coefficients of the linear and spatial error models diverge substantially, and should not do so had the model been well-specified.
+
+```{r ames7a, echo=FALSE, warning=FALSE, cache=TRUE}
+Htout <- capture.output(print(Hausman.test(gmm_err_mod, tol=1e-19)))
+cat(Htout[5], "\n")
+```
+
+
+## Using subgraphs in the data for splits
+
+The neighour graph may exhibit natural splits, and in this case does divide into 4 subgraphs:
+
+```{r ames8, echo=FALSE, warning=FALSE, cache=TRUE}
+n_comp <- n.comp.nb(knn10)$comp.id
+table(n_comp)
+```
+
+Using the first subgraph as the training set, and the second as the test set, we can mute the spillover of information between the two sets predicting from the fitted linear model (for this definition of neighbours):
+
+```{r ames8a, echo=FALSE, warning=FALSE, cache=TRUE}
+ames_train <- ames[n_comp == 1,]
+ames_test <- ames[n_comp == 2,]
+lm_mod <- lm(log(Sale_Price) ~ ., data=ames_train)
+ames_tt_sf <- sf::st_as_sf(rbind(ames_train, ames_test), coords = c("Longitude", "Latitude"), crs = "OGC:CRS84", remove=FALSE)
+nb_tt <- knn2nb(knearneigh(ames_tt_sf, k=10), sym=FALSE, row.names=row.names(ames_tt_sf))
+c0 <- coef(lm_mod)
+c0a <- na.omit(c0)
+ttX <- model.matrix(log(Sale_Price) ~ ., data=st_drop_geometry(ames_tt_sf))
+ttX <- ttX[,match(names(c0a), colnames(ttX))]
+ptt <- ttX %*% c0a
+ames_train$type <- "train"
+ames_test$type <- "test"
+type <- factor(c(ames_train$type, ames_test$type))
+lw <- nb2listw(nb_tt)
+x <- log(ames_tt_sf$Sale_Price) - ptt
+z <- scale(x, scale=FALSE)
+W_tt <- as(lw, "CsparseMatrix")
+out <- tt_moran(z, type, W_tt, 1000)
+rbind(I=out, p.value=attr(out, "pval"))
+```
+
+## Subgraphs in Ames
+
+```{r ames8b, echo=FALSE, }
+knitr::include_graphics("Screenshot from 2024-05-28 17-18-42.png")
+```
+
+
+## Decomposing $I$ - partitioned ${\mathbf W}$ by subgraphs
+
+```{r ames8c, echo=FALSE, cache=TRUE}
+knitr::include_graphics("Screenshot from 2024-05-29 11-55-22.png")
+```
+
+## Using subgraphs - spatial error model
+
+If we replace the aspatial linear model with SEM, the residual spatial autocorrelation in the training set is reduced somewhat, as it also is in the test set, compared to the aspatial model:
+
+```{r ames9, echo=FALSE, warning=FALSE, cache=TRUE}
+ames_train <- ames[n_comp == 1,]
+ames_test <- ames[n_comp == 2,]
+ames_train_sf <- sf::st_as_sf(ames_train, coords = c("Longitude", "Latitude"), crs = "OGC:CRS84", remove=FALSE)
+nb_train <- knn2nb(knearneigh(ames_train_sf, k=10), sym=FALSE, row.names=row.names(ames_train_sf))
+gmm_err_moda <- GMerrorsar(log(Sale_Price) ~ ., data=ames_train, listw=nb2listw(nb_train), returnHcov=TRUE)
+ames_tt_sf <- sf::st_as_sf(rbind(ames_train, ames_test), coords = c("Longitude", "Latitude"), crs = "OGC:CRS84", remove=FALSE)
+nb_tt <- knn2nb(knearneigh(ames_tt_sf, k=10), sym=FALSE, row.names=row.names(ames_tt_sf))
+c0 <- coef(gmm_err_moda$lm.target)
+names(c0) <- substring(names(c0), 19)
+c0a <- na.omit(c0)
+ttX <- model.matrix(log(Sale_Price) ~ ., data=st_drop_geometry(ames_tt_sf))
+ttX <- ttX[,match(names(c0a), colnames(ttX))]
+ptt <- ttX %*% c0a
+ptt <- ptt + gmm_err_moda$lambda * lag.listw(lw, log(ames_tt_sf$Sale_Price) - ptt)
+ames_train$type <- "train"
+ames_test$type <- "test"
+type <- factor(c(ames_train$type, ames_test$type))
+lw <- nb2listw(nb_tt)
+x <- log(ames_tt_sf$Sale_Price) - ptt
+z <- scale(x, scale=FALSE)
+W_tt <- as(lw, "CsparseMatrix")
+out <- tt_moran(z, type, W_tt, 1000)
+rbind(I=out, p.value=attr(out, "pval"))
+```
+```{r ames9a, echo=FALSE, warning=FALSE, cache=TRUE}
+Htout <- capture.output(print(Hausman.test(gmm_err_moda, tol=1e-19)))
+cat(Htout[5], "\n")
+```
+
+## Clustering observations in space
+
+In `spatialsample` [@R-spatialsample; @mahoneyetal:23], sampling methods are provided to reduce the spillover of information between training and test sets, by creating spatial clusters using by default `kmeans` in geographic space:
+
+```{r ames10, echo=FALSE, warning=FALSE, cache=TRUE}
+set.seed(12345)
+kfold10 <- spatialsample::spatial_clustering_cv(ames_sf, v=10)
+Kfout <- capture.output(print(kfold10))
+cat(Kfout[5:length(Kfout)], sep="\n")
+```
+
+## Clustering observations in space
+
+Using these 10 folds and the aspatial linear model, we see that the decomposed values of $I$ between training and test sets are muted:
+
+```{r ames10a, echo=FALSE, warning=FALSE, cache=TRUE}
+res <- vector(mode="list", length=nrow(kfold10))
+for (i in seq_along(res)) {
+  ames_train <- ames[kfold10$splits[[i]]$in_id,]
+  lm_mod <- try(lm(log(Sale_Price) ~ ., data=ames_train))
+  if (!inherits(lm_mod, "try-error")) {
+    ames_test <- ames[!(1:2930 %in% kfold10$splits[[i]]$in_id),]
+    ames_tt_sf <- sf::st_as_sf(rbind(ames_train, ames_test), coords = c("Longitude", "Latitude"), crs = "OGC:CRS84", remove=FALSE)
+    nb_tt <- knn2nb(knearneigh(ames_tt_sf, k=10), sym=FALSE, row.names=row.names(ames_tt_sf))
+    c0 <- coef(lm_mod)
+    c0a <- na.omit(c0)
+    mm_train <- model.matrix(log(Sale_Price) ~ ., data=ames_train)
+    mm_train <- mm_train[,match(names(c0a), colnames(mm_train))]
+    mm_test <- model.matrix(log(Sale_Price) ~ ., data=ames_test)
+    mm_test <- mm_test[,match(names(c0a), colnames(mm_test))]
+    ttX <- rbind(mm_train, mm_test)
+    ptt <- ttX %*% c0a
+    ames_train$type <- "train"
+    ames_test$type <- "test"
+    type <- factor(c(ames_train$type, ames_test$type))
+    lw <- nb2listw(nb_tt)
+    x <- log(ames_tt_sf$Sale_Price) - ptt
+    I <- moran(x, listw=lw, n=length(nb_tt), S0=Szero(lw))$I
+    ww <- waywiser::ww_global_moran_i_vec(truth=log(ames_tt_sf$Sale_Price), estimate=c(ptt), wt=lw)
+    z <- scale(x, scale=FALSE)
+    W_tt <- as(lw, "CsparseMatrix")
+    out <- tt_moran(z, type, W_tt, 1000)
+    res[[i]] <- list(moran=c(out), xrank=attr(out, "xrank"), pval=attr(out, "pval"))
+    attr(res[[i]], "I") <- I
+    attr(res[[i]], "ww") <- ww
+  } else {
+    res[[i]] <- lm_mod
+  }
+}
+t(sapply(res, function(x) I=x$moran))
+```
+
+## Clustering observations in space - SEM model
+
+Again using these 10 folds but now with the spatial error model, we see that the decomposed values of $I$ between sets remain muted, but values of $I$ in the training set increased:
+
+```{r ames10b, echo=FALSE, warning=FALSE, cache=TRUE}
+res <- vector(mode="list", length=nrow(kfold10))
+for (i in seq_along(res)) {
+  ames_train <- ames[kfold10$splits[[i]]$in_id,]
+  ames_train_sf <- sf::st_as_sf(ames_train, coords = c("Longitude", "Latitude"), crs = "OGC:CRS84", remove=FALSE)
+  nb_train <- knn2nb(knearneigh(ames_train_sf, k=10), sym=FALSE, row.names=row.names(ames_train_sf))
+  gmm_mod_mod <- try(GMerrorsar(log(Sale_Price) ~ ., data=ames_train, listw=nb2listw(nb_train), returnHcov=TRUE))
+  if (!inherits(lm_mod, "try-error")) {
+    ames_test <- ames[!(1:2930 %in% kfold10$splits[[i]]$in_id),]
+    ames_tt_sf <- sf::st_as_sf(rbind(ames_train, ames_test), coords = c("Longitude", "Latitude"), crs = "OGC:CRS84", remove=FALSE)
+    nb_tt <- knn2nb(knearneigh(ames_tt_sf, k=10), sym=FALSE, row.names=row.names(ames_tt_sf))
+    c0 <- coef(gmm_err_mod$lm.target)
+    names(c0) <- substring(names(c0), 19)
+    c0a <- na.omit(c0)
+    ttX <- model.matrix(log(Sale_Price) ~ ., data=st_drop_geometry(ames_tt_sf))
+    ttX <- ttX[,match(names(c0a), colnames(ttX))]
+    ptt <- ttX %*% c0a
+    ptt <- ptt + gmm_err_moda$lambda * lag.listw(lw, log(ames_tt_sf$Sale_Price) - ptt)
+    ames_train$type <- "train"
+    ames_test$type <- "test"
+    type <- factor(c(ames_train$type, ames_test$type))
+    lw <- nb2listw(nb_tt)
+    x <- log(ames_tt_sf$Sale_Price) - ptt
+    I <- moran(x, listw=lw, n=length(nb_tt), S0=Szero(lw))$I
+    ww <- waywiser::ww_global_moran_i_vec(truth=log(ames_tt_sf$Sale_Price), estimate=c(ptt), wt=lw)
+    z <- scale(x, scale=FALSE)
+    W_tt <- as(lw, "CsparseMatrix")
+    out <- tt_moran(z, type, W_tt, 1000)
+    res[[i]] <- list(moran=c(out), xrank=attr(out, "xrank"), pval=attr(out, "pval"))
+    attr(res[[i]], "I") <- I
+    attr(res[[i]], "ww") <- ww
+  } else {
+    res[[i]] <- lm_mod
+  }
+}
+t(sapply(res, function(x) I=x$moran))
+```
+
+```{r pkg-bibs, include=FALSE}
+# generate a BibTeX database automatically for some R packages
+knitr::write_bib(c('sf', 'mapview', 'spdep', 'spatialreg', 'modeldata', 'rsample', 'waywiser', 'spatialsample'), 'packages.bib')
+```
+
+
+# Preliminary conclusions
+
+## Preliminary conclusions
+
+- If the data being used in machine learning are spatial, then assessing the models employed for performance issues associated with unmodelled spatial autocorrelation is justified, for example using `waywiser` or similar software.
+
+- It is further relevant to try to use spatially-aware sampling to create training and test data sets with reduced spillover of information between the sets, for example `spatialsample` or utilising subgraphs; the decomposition of $I$ used here is only an early prototype.
+
+- It may be worth trying out spatial econometrics models in addition to aspatial models in workflows, again, more study is needed.
+
+- Note also that the method chosen to represent neighbours may prejudice the exercise, as the implied neighbour definitions used here may be "unfair" as they include different sets of neighbours at different stages.
+
+# Aftermatter
+
+## References {.allowframebreaks}
+
