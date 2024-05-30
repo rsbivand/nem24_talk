@@ -34,6 +34,8 @@ bibliography: [book.bib, packages.bib]
 
 - The Ames house price data set used for assessing the value of properties is affected by spatial autocorrelation, where both the choice of training/test set splits and of appropriate models need attention
 
+- Slides and source at: [https://rsbivand.github.io/nem24_talk](https://rsbivand.github.io/nem24_talk)
+
 
 # Why is spatial data special? {#sec-why-special}
 
@@ -83,9 +85,9 @@ bibliography: [book.bib, packages.bib]
 
 - @pace+lesage:08 point to a worrying problem encountered when the estimated coefficients of an aspatial regression model and those of a spatial regression model including such an estimated spatial structure diverge. 
 
-- This may occur when omitted independent variables are "picked up" by spatially autocorrelated residuals, and they propose a Hausman test to check such divergence. 
+- This may occur when omitted independent variables are "picked up" by spatially autocorrelated residuals, and they propose a Hausman test to check such divergence where possible. 
 
-- This observation is very similar to that seen in disease mapping, from initial reports by @reichetal:06 and @hodges+reich:10, termed *spatial confounding*, and recently actively pursued by @zimmerman+verhoef:22, @dupontetal:22, urdangarinetal:23 and @wolf:24.
+- This observation is very similar to that seen in disease mapping, from initial reports by @reichetal:06 and @hodges+reich:10, termed *spatial confounding*, and recently actively pursued by @zimmerman+verhoef:22, @dupontetal:22, @urdangarinetal:23 and @wolf:24.
 
 ## Spatial diff-in-diff
 
@@ -168,7 +170,7 @@ which will be useful later.
 
 ## How safe is the assumption of independence between properties?
 
-Taking $k = 10$ nearest neighbours on the sphere of Ames propertiesx [@R-sf; @R-spdep], and Moran's $I$ test for spatial autocorrelation [for references see @bivand+wong:18; @pebesma+bivand:23; @R-spdep], we see that it is most unlikely that the assumption holds for the logarithm of sale price:
+Taking $k = 10$ nearest neighbours on the sphere of Ames properties [@R-sf; @R-spdep], and Moran's $I$ test for spatial autocorrelation [for references see @bivand+wong:18; @pebesma+bivand:23; @R-spdep], we see that it is most unlikely that the assumption holds for the logarithm of sale price:
 
 ```{r ames1, echo=FALSE, cache=TRUE}
 data(ames, package="modeldata")
@@ -250,7 +252,7 @@ knitr::include_graphics("Screenshot from 2024-05-29 11-47-02.png")
 
 ## Decomposing $I$
 
-The sum of the components of $i$ is as before:
+The sum of the components of $I$ is as before:
 
 ```{r ames5, echo=FALSE, warning=FALSE, cache=TRUE}
 ames_train$type <- "train"
@@ -273,7 +275,7 @@ Obviously, a different split would give a different outcome, but information is 
 
 ## GMM spatial error model
 
-Let's try fitting a spatial error model by GMM (`spatialreg::GMerrorsar`) [see for example @bivandetal:21 or @bivand+piras:15] on the training data set, taking the 10 nearest neighbours. The spatial autocorrelation in the residual is expressed through a spatial error model (SEM): 
+Let's try fitting a spatial error model by GMM (`spatialreg::GMerrorsar` [@bivandetal:21; @bivand+piras:15]) on the training data set, taking the 10 nearest neighbours. The spatial autocorrelation in the residual is expressed through a spatial error model (SEM): 
 
 $$
 {\mathbf y} = {\mathbf X}\beta + {\mathbf u},
@@ -337,9 +339,15 @@ out <- tt_moran(z=z, type=type, W=W_tt, nsim=1000)
 rbind(I=out, p.value=attr(out, "pval"))
 ```
 
-Unfortunately, this spatial error model appears to be rather mis-specified, as the regression coefficients of the linear and spatial error models diverge substantially, and should not do so had the model been well-specified.
+Unfortunately, this spatial error model appears to be rather mis-specified, as the regression coefficients of the linear and spatial error models diverge substantially, and should not do so had the model been well-specified. The RMSE is:
 
 ```{r ames7a, echo=FALSE, warning=FALSE, cache=TRUE}
+sqrt(mean((coef(gmm_err_mod$lm.model) - coef(gmm_err_mod$lm.target))^2))
+```
+
+The Hausman test reports:
+
+```{r ames7b, echo=FALSE, warning=FALSE, cache=TRUE}
 Htout <- capture.output(print(Hausman.test(gmm_err_mod, tol=1e-19)))
 cat(Htout[5], "\n")
 ```
@@ -420,14 +428,24 @@ W_tt <- as(lw, "CsparseMatrix")
 out <- tt_moran(z, type, W_tt, 1000)
 rbind(I=out, p.value=attr(out, "pval"))
 ```
+
+The RMSE for coefficient divergence is:
+
 ```{r ames9a, echo=FALSE, warning=FALSE, cache=TRUE}
+sqrt(mean((coef(gmm_err_moda$lm.model) - coef(gmm_err_moda$lm.target))^2))
+```
+
+and the Hausman test:
+
+```{r ames9b, echo=FALSE, warning=FALSE, cache=TRUE}
 Htout <- capture.output(print(Hausman.test(gmm_err_moda, tol=1e-19)))
 cat(Htout[5], "\n")
 ```
 
+
 ## Clustering observations in space
 
-In `spatialsample` [@R-spatialsample; @mahoneyetal:23], sampling methods are provided to reduce the spillover of information between training and test sets, by creating spatial clusters using by default `kmeans` in geographic space:
+In `spatialsample` [@R-spatialsample; @mahoneyetal:23], sampling methods are provided to reduce the spillover of information between training and test sets, by creating spatial clusters using by default `kmeans` in geographical space:
 
 ```{r ames10, echo=FALSE, warning=FALSE, cache=TRUE}
 set.seed(12345)
@@ -487,7 +505,7 @@ for (i in seq_along(res)) {
   ames_train <- ames[kfold10$splits[[i]]$in_id,]
   ames_train_sf <- sf::st_as_sf(ames_train, coords = c("Longitude", "Latitude"), crs = "OGC:CRS84", remove=FALSE)
   nb_train <- knn2nb(knearneigh(ames_train_sf, k=10), sym=FALSE, row.names=row.names(ames_train_sf))
-  gmm_mod_mod <- try(GMerrorsar(log(Sale_Price) ~ ., data=ames_train, listw=nb2listw(nb_train), returnHcov=TRUE))
+  gmm_err_mod <- try(GMerrorsar(log(Sale_Price) ~ ., data=ames_train, listw=nb2listw(nb_train), returnHcov=TRUE))
   if (!inherits(lm_mod, "try-error")) {
     ames_test <- ames[!(1:2930 %in% kfold10$splits[[i]]$in_id),]
     ames_tt_sf <- sf::st_as_sf(rbind(ames_train, ames_test), coords = c("Longitude", "Latitude"), crs = "OGC:CRS84", remove=FALSE)
@@ -498,7 +516,7 @@ for (i in seq_along(res)) {
     ttX <- model.matrix(log(Sale_Price) ~ ., data=st_drop_geometry(ames_tt_sf))
     ttX <- ttX[,match(names(c0a), colnames(ttX))]
     ptt <- ttX %*% c0a
-    ptt <- ptt + gmm_err_moda$lambda * lag.listw(lw, log(ames_tt_sf$Sale_Price) - ptt)
+    ptt <- ptt + gmm_err_mod$lambda * lag.listw(lw, log(ames_tt_sf$Sale_Price) - ptt)
     ames_train$type <- "train"
     ames_test$type <- "test"
     type <- factor(c(ames_train$type, ames_test$type))
@@ -512,11 +530,27 @@ for (i in seq_along(res)) {
     res[[i]] <- list(moran=c(out), xrank=attr(out, "xrank"), pval=attr(out, "pval"))
     attr(res[[i]], "I") <- I
     attr(res[[i]], "ww") <- ww
+    attr(res[[i]], "RMSE") <- sqrt(mean((coef(gmm_err_mod$lm.model) - coef(gmm_err_mod$lm.target))^2))
+    attr(res[[i]], "Ht") <- Hausman.test(gmm_err_mod, tol=1e-19)
   } else {
     res[[i]] <- lm_mod
   }
 }
-t(sapply(res, function(x) I=x$moran))
+t(sapply(res, function(x) x$moran))
+```
+
+## Clustering observations in space - SEM model
+
+The RMSEs for coefficient divergence are:
+
+```{r ames10c, echo=FALSE, warning=FALSE, cache=TRUE}
+sapply(res, function(x) attr(x, "RMSE"))
+```
+
+and the Hausman test p-values:
+
+```{r ames10d, echo=FALSE, warning=FALSE, cache=TRUE}
+sapply(res, function(x) attr(x, "Ht")$p.value)
 ```
 
 ```{r pkg-bibs, include=FALSE}
