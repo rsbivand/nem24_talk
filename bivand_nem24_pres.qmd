@@ -10,6 +10,7 @@ author:
       - name: Norwegian School of Economics
         city: Bergen
         country: Norway
+institute: Norwegian School of Economics, Bergen, Norway
 format: 
   beamer:
     aspectratio: 169
